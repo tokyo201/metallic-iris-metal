@@ -9,6 +9,10 @@ base {
     archivesName = project.archives_base_name
 }
 
+repositories {
+    mavenCentral()
+}
+
 dependencies {
     minecraft "com.mojang:minecraft:${project.minecraft_version}"
     mappings loom.officialMojangMappings()
