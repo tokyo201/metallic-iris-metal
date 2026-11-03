@@ -1,1 +1,33 @@
-{"name":"Build test mod","on":{"push":{"branches":["main"]},"workflow_dispatch":{}},"permissions":{"contents":"read"},"jobs":{"build":{"runs-on":"ubuntu-latest","steps":[{"uses":"actions/checkout@v4"},{"uses":"actions/setup-java@v4","with":{"distribution":"temurin","java-version":"25"}},{"uses":"gradle/actions/setup-gradle@v4","with":{"gradle-version":"9.8.2"}},{"name":"Normalize scaffold files","shell":"bash","run":"set -euxo pipefail; mkdir -p $RUNNER_TEMP/mi; bf=$(find build.gradle -type f -name build.gradle -print -quit); test -n $bf; cp $bf $RUNNER_TEMP/mi/build.gradle; mv build.gradle $RUNNER_TEMP/mi/bg; mv $RUNNER_TEMP/mi/build.gradle ./build.gradle; pf=$(find gradle.properties -type f -name gradle.properties -print -quit); test -n $pf; cp $pf $RUNNER_TEMP/mi/gradle.properties; mv gradle.properties $RUNNER_TEMP/mi/gp; mv $RUNNER_TEMP/mi/gradle.properties ./gradle.properties; sf=$(find src/main/java -type f -name MetallicIrisMetal.java -print -quit); test -n $sf; cp $sf $RUNNER_TEMP/mi/MetallicIrisMetal.java; mv src/main/java/dev/tokyo/metalliciris/MetallicIrisMetal.java $RUNNER_TEMP/mi/javadir; cp $RUNNER_TEMP/mi/MetallicIrisMetal.java src/main/java/dev/tokyo/metalliciris/MetallicIrisMetal.java; mf=$(find src/main/resources -type f -name fabric.mod.json -print -quit); test -n $mf; cp $mf $RUNNER_TEMP/mi/fabric.mod.json; mv src/main/resources/fabric.mod.json $RUNNER_TEMP/mi/metadir; cp $RUNNER_TEMP/mi/fabric.mod.json src/main/resources/fabric.mod.json"},{"name":"Build mod JAR","run":"gradle build --no-daemon"},{"uses":"actions/upload-artifact@v4","with":{"name":"metallic-iris-metal-test-jar","path":"build/libs/*.jar","if-no-files-found":"error"}}]}}
+name: Build test mod
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "25"
+
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: "9.8.2"
+
+      - name: Build mod JAR
+        run: gradle build --no-daemon
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: metallic-iris-metal-test-jar
+          path: build/libs/*.jar
+          if-no-files-found: error
