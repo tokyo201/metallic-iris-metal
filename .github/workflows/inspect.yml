@@ -1,0 +1,44 @@
+name: Inspect Minecraft API (temporary)
+on:
+  push:
+    branches: ["tmp/inspect-api"]
+permissions:
+  contents: read
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "25"
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: "9.8.2"
+      - name: Build to populate Loom cache
+        run: gradle compileJava --no-daemon
+      - name: Locate Minecraft jar and dump GUI API
+        run: |
+          JAR=""
+          for j in $(find "$HOME/.gradle" "$PWD/.gradle" -name '*.jar' -size +5M 2>/dev/null); do
+            if unzip -l "$j" 2>/dev/null | grep -q 'net/minecraft/client/gui/screens/Screen.class'; then JAR="$j"; break; fi
+          done
+          echo "JAR=$JAR"
+          test -n "$JAR"
+          for c in \
+            net.minecraft.client.gui.screens.Screen \
+            net.minecraft.client.gui.components.Button \
+            'net.minecraft.client.gui.components.Button$Builder' \
+            net.minecraft.client.gui.components.CycleButton \
+            'net.minecraft.client.gui.components.CycleButton$Builder' \
+            net.minecraft.client.gui.components.StringWidget \
+            net.minecraft.client.gui.components.AbstractWidget \
+            net.minecraft.client.gui.layouts.LinearLayout \
+            net.minecraft.network.chat.Component \
+            net.minecraft.client.Minecraft ; do
+            echo "=================== $c"
+            javap -public -cp "$JAR" "$c" 2>&1 | head -120
+          done
+          echo "=================== gui classes"
+          unzip -l "$JAR" | grep -E 'client/gui/(GuiGraphics|screens/Screen|components/(Button|CycleButton|StringWidget|AbstractSelectionList|ObjectSelectionList|ContainerObjectSelectionList|OptionsList|AbstractContainerWidget|ScrollableLayout))' | awk '{print $4}' | head -60
