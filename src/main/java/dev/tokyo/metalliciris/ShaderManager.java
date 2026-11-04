@@ -31,6 +31,11 @@ public final class ShaderManager {
         this.settings = settings;
     }
 
+    /** The folder scanned for packs. */
+    public Path packsDir() {
+        return packsDir;
+    }
+
     public ShaderSettings settings() {
         return settings;
     }

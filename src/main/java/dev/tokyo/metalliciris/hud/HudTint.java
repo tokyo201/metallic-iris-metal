@@ -9,8 +9,8 @@ import net.minecraft.resources.Identifier;
 
 /**
  * Proof-of-hook, registered through Fabric API's HUD registry (no mixin). While shaders are on
- * with an active pack it draws a translucent orange tint behind the HUD every frame, plus a small
- * status square in the top-left corner (green when active, red when not) whenever the hook runs.
+ * it draws a translucent orange tint behind the HUD every frame, plus a small
+ * status square in the top-left corner (green active, yellow on without a pack, red off) whenever the hook runs.
  * This is not shading yet.
  */
 public final class HudTint {
@@ -29,16 +29,18 @@ public final class HudTint {
                     }
                     HookStats.frameSeen();
                     ShaderManager manager = MetallicIrisMetal.manager();
+                    boolean on = manager != null && manager.settings().isEnabled();
                     boolean active = manager != null && manager.isShaderActive();
-                    int state = active ? 1 : 0;
+                    int state = active ? 2 : on ? 1 : 0;
                     if (state != lastState) {
                         lastState = state;
-                        MetallicIrisMetal.say("HUD hook: shaders " + (active ? "ACTIVE" : "inactive")
+                        MetallicIrisMetal.say("HUD hook: shaders " + (active ? "ACTIVE" : on ? "ON, no pack" : "OFF")
                                 + (manager == null ? " (manager null)" : ", " + HookStats.describe(manager)));
                     }
-                    // Status square, top-left: green = shaders active, red = hook runs but shaders inactive.
-                    graphics.fill(2, 2, 10, 10, active ? 0xFF00FF00 : 0xFFFF0000);
-                    if (!active) {
+                    // Status square, top-left: green = shaders on with a pack, yellow = on but no pack
+                    // selected, red = shaders off.
+                    graphics.fill(2, 2, 10, 10, active ? 0xFF00FF00 : on ? 0xFFFFFF00 : 0xFFFF0000);
+                    if (!on) {
                         return;
                     }
                     HookStats.frameTinted();

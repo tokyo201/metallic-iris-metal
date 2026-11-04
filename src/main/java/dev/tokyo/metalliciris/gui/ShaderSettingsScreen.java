@@ -50,6 +50,12 @@ public final class ShaderSettingsScreen extends Screen {
 
         addRenderableWidget(Button.builder(label("Shaders", settings.isEnabled()), b -> {
             settings.setEnabled(!settings.isEnabled());
+            if (settings.isEnabled() && settings.getActivePack() == null) {
+                List<String> usable = manager.enabledPacks();
+                if (!usable.isEmpty()) {
+                    manager.activate(usable.get(0));
+                }
+            }
             MetallicIrisMetal.saveSettings();
             refresh();
         }).bounds(cx - 150, y, 300, 20).build());
@@ -62,7 +68,7 @@ public final class ShaderSettingsScreen extends Screen {
         List<String> packs = manager.installedPacks();
         if (packs.isEmpty()) {
             addRenderableWidget(new StringWidget(cx - 150, y, 300, 12,
-                    Component.literal("No shaderpacks found in the shaderpacks folder."),
+                    Component.literal("No packs in " + tail(manager.packsDir().toString(), 44)),
                     Minecraft.getInstance().font));
         }
 
@@ -134,6 +140,10 @@ public final class ShaderSettingsScreen extends Screen {
             MetallicIrisMetal.saveSettings();
         }
         Minecraft.getInstance().setScreenAndShow(parent);
+    }
+
+    static String tail(String s, int max) {
+        return s.length() <= max ? s : "…" + s.substring(s.length() - (max - 1));
     }
 
     static Component label(String name, boolean on) {

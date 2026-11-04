@@ -38,7 +38,7 @@ public final class HookStats {
         } else if (!manager.settings().isPackEnabled(manager.settings().getActivePack())) {
             why = "selected pack is Off";
         } else {
-            why = "tinting";
+            why = "pack selected";
         }
         return "Hook: running, " + hudFrames + " frames, " + tintedFrames + " tinted - " + why;
     }
