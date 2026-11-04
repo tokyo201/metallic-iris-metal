@@ -41,6 +41,7 @@ public final class ShaderSettingsStore {
         }
 
         settings.setEnabled(Boolean.parseBoolean(props.getProperty("enabled", "false")));
+        settings.setTestEffect(Boolean.parseBoolean(props.getProperty("testEffect", "false")));
         String active = props.getProperty("activePack");
         settings.setActivePack(active == null || active.isBlank() ? null : active);
 
@@ -68,6 +69,7 @@ public final class ShaderSettingsStore {
     public static void save(Path file, ShaderSettings settings) {
         Map<String, String> entries = new TreeMap<>();
         entries.put("enabled", Boolean.toString(settings.isEnabled()));
+        entries.put("testEffect", Boolean.toString(settings.isTestEffect()));
         if (settings.getActivePack() != null) {
             entries.put("activePack", settings.getActivePack());
         }

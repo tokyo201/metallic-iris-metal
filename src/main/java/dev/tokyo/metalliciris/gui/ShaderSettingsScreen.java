@@ -64,6 +64,13 @@ public final class ShaderSettingsScreen extends Screen {
         }).bounds(cx - 150, y, 300, 20).build());
         y += 24;
 
+        addRenderableWidget(Button.builder(label("Test effect (grayscale)", settings.isTestEffect()), b -> {
+            settings.setTestEffect(!settings.isTestEffect());
+            MetallicIrisMetal.saveSettings();
+            refresh();
+        }).bounds(cx - 150, y, 300, 20).build());
+        y += 24;
+
         addRenderableWidget(new StringWidget(cx - 150, y, 300, 10,
                 Component.literal(shorten(HookStats.describe(manager), 70)), Minecraft.getInstance().font));
         y += 14;

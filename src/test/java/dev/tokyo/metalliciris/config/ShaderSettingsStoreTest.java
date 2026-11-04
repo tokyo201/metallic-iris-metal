@@ -26,6 +26,7 @@ class ShaderSettingsStoreTest {
         Path file = dir.resolve("sub/settings.properties");
         ShaderSettings s = new ShaderSettings();
         s.setEnabled(true);
+        s.setTestEffect(true);
         s.setActivePack("My Pack.zip");
         s.setPackEnabled("Old.zip", false);
         s.setOption("My Pack.zip", "QUALITY", "3");
@@ -35,6 +36,8 @@ class ShaderSettingsStoreTest {
         ShaderSettings r = ShaderSettingsStore.load(file);
 
         assertTrue(r.isEnabled());
+        assertTrue(r.isTestEffect());
+        assertFalse(new ShaderSettings().isTestEffect(), "off by default");
         assertEquals("My Pack.zip", r.getActivePack());
         assertFalse(r.isPackEnabled("Old.zip"));
         assertTrue(r.isPackEnabled("My Pack.zip"));

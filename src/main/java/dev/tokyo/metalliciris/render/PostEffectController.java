@@ -38,7 +38,8 @@ public final class PostEffectController {
         if (renderer == null) {
             return;
         }
-        boolean want = manager != null && manager.isShaderActive() && mc.level != null;
+        boolean want = manager != null && manager.isShaderActive() && manager.settings().isTestEffect()
+                && mc.level != null;
         Identifier current = renderer.currentPostEffect();
 
         if (!want) {

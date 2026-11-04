@@ -13,6 +13,7 @@ import java.util.TreeSet;
  */
 public final class ShaderSettings {
     private boolean enabled;
+    private boolean testEffect;
     private String activePack;
     private final Set<String> disabledPacks = new TreeSet<>();
     private final Map<String, Map<String, String>> options = new TreeMap<>();
@@ -24,6 +25,15 @@ public final class ShaderSettings {
 
     public void setEnabled(boolean enabled) {
         this.enabled = enabled;
+    }
+
+    /** Experimental: run the built-in grayscale post effect while shaders are active. Off by default. */
+    public boolean isTestEffect() {
+        return testEffect;
+    }
+
+    public void setTestEffect(boolean testEffect) {
+        this.testEffect = testEffect;
     }
 
     /** The selected pack, or {@code null} for none. */
