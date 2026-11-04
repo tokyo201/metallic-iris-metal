@@ -17,12 +17,26 @@ jobs:
           gradle-version: "9.8.2"
       - name: Populate Loom cache
         run: gradle compileJava --no-daemon -q
-      - name: Dump Fabric HUD API
+      - name: Dump Blaze3D API
         run: |
-          for J in $(find "$HOME/.gradle" -name 'fabric-rendering-v1*.jar' ! -name '*sources*' | head -2); do echo "JAR=$J"; done
-          J=$(find "$HOME/.gradle" -name 'fabric-rendering-v1*.jar' ! -name '*sources*' | head -1)
-          echo "##### HUD classes in jar"
-          unzip -l "$J" | awk '{print $4}' | grep -E "client/rendering/v1/hud/[A-Za-z]+\.class$" | head -20
-          for c in net.fabricmc.fabric.api.client.rendering.v1.hud.HudElementRegistry net.fabricmc.fabric.api.client.rendering.v1.hud.HudElement net.fabricmc.fabric.api.client.rendering.v1.hud.VanillaHudElements; do
-            echo "##### $c"; javap -p -cp "$J" "$c" 2>&1 | cut -c1-200 | head -30
-          done
+          MC=$(find "$HOME/.gradle" -name 'minecraft-merged.jar' | head -1)
+          FR=$(find "$HOME/.gradle" -name 'fabric-rendering-v1*.jar' ! -name '*sources*' | head -1)
+          show() { echo "##### $1"; javap -p -cp "$MC:$FR" "$1" 2>&1 | grep -vE "^Compiled|lambda\$|static \{\}|synthetic" | cut -c1-190 | head -${2:-40}; }
+          echo "##### fabric world events"
+          unzip -l "$FR" | awk '{print $4}' | grep -E "rendering/v1/world/[A-Za-z]+\.class$" | head -20
+          show net.fabricmc.fabric.api.client.rendering.v1.world.WorldRenderEvents 30
+          show com.mojang.blaze3d.pipeline.RenderPipeline 30
+          show 'com.mojang.blaze3d.pipeline.RenderPipeline$Builder' 40
+          show com.mojang.blaze3d.systems.RenderPass 30
+          show com.mojang.blaze3d.systems.CommandEncoder 30
+          show com.mojang.blaze3d.systems.GpuDevice 25
+          show com.mojang.blaze3d.pipeline.RenderTarget 25
+          show net.minecraft.client.renderer.PostPass 20
+          echo "##### Minecraft getMainRenderTarget / RenderSystem getDevice"
+          javap -p -cp "$MC" net.minecraft.client.Minecraft | grep -E "RenderTarget" | cut -c1-160
+          javap -p -cp "$MC" com.mojang.blaze3d.systems.RenderSystem | grep -E "getDevice|getSamplerCache|sampler" | cut -c1-160
+          echo "##### blit shaders"
+          for f in assets/minecraft/shaders/core/blit_screen.vsh assets/minecraft/shaders/core/blit_screen.fsh assets/minecraft/shaders/post/blit.fsh; do echo "--- $f"; unzip -p "$MC" "$f" 2>&1 | head -30; done
+          unzip -l "$MC" | awk '{print $4}' | grep -E "shaders/(core/blit|post/(blit|invert|entity_outline))" | head
+          echo "##### RenderPipelines blit"
+          javap -p -cp "$MC" net.minecraft.client.renderer.RenderPipelines | grep -iE "blit|screen" | cut -c1-170 | head
