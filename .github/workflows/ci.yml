@@ -26,6 +26,9 @@ jobs:
       - name: Build mod JAR
         run: gradle build --no-daemon
 
+      - name: Show packaged fabric.mod.json
+        run: unzip -p build/libs/metallic-iris-metal-0.1.0.jar fabric.mod.json
+
       - uses: actions/upload-artifact@v4
         with:
           name: metallic-iris-metal-test-jar
