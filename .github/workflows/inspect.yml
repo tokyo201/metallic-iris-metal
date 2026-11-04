@@ -17,26 +17,21 @@ jobs:
           gradle-version: "9.8.2"
       - name: Populate Loom cache
         run: gradle compileJava --no-daemon -q
-      - name: Dump Blaze3D API
+      - name: Dump post-effect system
         run: |
           MC=$(find "$HOME/.gradle" -name 'minecraft-merged.jar' | head -1)
-          FR=$(find "$HOME/.gradle" -name 'fabric-rendering-v1*.jar' ! -name '*sources*' | head -1)
-          show() { echo "##### $1"; javap -p -cp "$MC:$FR" "$1" 2>&1 | grep -vE "^Compiled|lambda\$|static \{\}|synthetic" | cut -c1-190 | head -${2:-40}; }
-          echo "##### fabric world events"
-          unzip -l "$FR" | awk '{print $4}' | grep -E "rendering/v1/world/[A-Za-z]+\.class$" | head -20
-          show net.fabricmc.fabric.api.client.rendering.v1.world.WorldRenderEvents 30
-          show com.mojang.blaze3d.pipeline.RenderPipeline 30
-          show 'com.mojang.blaze3d.pipeline.RenderPipeline$Builder' 40
-          show com.mojang.blaze3d.systems.RenderPass 30
-          show com.mojang.blaze3d.systems.CommandEncoder 30
-          show com.mojang.blaze3d.systems.GpuDevice 25
-          show com.mojang.blaze3d.pipeline.RenderTarget 25
-          show net.minecraft.client.renderer.PostPass 20
-          echo "##### Minecraft getMainRenderTarget / RenderSystem getDevice"
-          javap -p -cp "$MC" net.minecraft.client.Minecraft | grep -E "RenderTarget" | cut -c1-160
-          javap -p -cp "$MC" com.mojang.blaze3d.systems.RenderSystem | grep -E "getDevice|getSamplerCache|sampler" | cut -c1-160
-          echo "##### blit shaders"
-          for f in assets/minecraft/shaders/core/blit_screen.vsh assets/minecraft/shaders/core/blit_screen.fsh assets/minecraft/shaders/post/blit.fsh; do echo "--- $f"; unzip -p "$MC" "$f" 2>&1 | head -30; done
-          unzip -l "$MC" | awk '{print $4}' | grep -E "shaders/(core/blit|post/(blit|invert|entity_outline))" | head
-          echo "##### RenderPipelines blit"
-          javap -p -cp "$MC" net.minecraft.client.renderer.RenderPipelines | grep -iE "blit|screen" | cut -c1-170 | head
+          LC=$(find "$HOME/.gradle" -name 'fabric-lifecycle-events-v1*.jar' ! -name '*sources*' | head -1)
+          echo "##### post_effect + shader files"
+          unzip -l "$MC" | awk '{print $4}' | grep -E "assets/minecraft/(post_effect|shaders/post)/|core/screenquad" | head -30
+          for f in assets/minecraft/post_effect/invert.json assets/minecraft/shaders/post/invert.fsh assets/minecraft/shaders/core/screenquad.vsh; do echo "--- $f"; unzip -p "$MC" "$f" 2>&1 | head -40; done
+          echo "##### GameRenderer post/effect methods"
+          javap -p -cp "$MC" net.minecraft.client.renderer.GameRenderer | grep -iE "post|effect|shader" | cut -c1-200
+          echo "##### ShaderManager / PostChain"
+          javap -p -cp "$MC" net.minecraft.client.renderer.ShaderManager | grep -iE "post|public" | cut -c1-200 | head -15
+          javap -p -cp "$MC" net.minecraft.client.renderer.PostChain | grep -E "public|static" | cut -c1-200 | head -12
+          echo "##### Minecraft getShaderManager"
+          javap -p -cp "$MC" net.minecraft.client.Minecraft | grep -iE "ShaderManager|getMainRenderTarget" | cut -c1-160
+          echo "##### ClientTickEvents"
+          javap -p -cp "$LC" net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents 2>&1 | head -8 | cut -c1-200
+          echo "##### vanilla post effect ids"
+          javap -p -cp "$MC" net.minecraft.client.renderer.LevelTargetBundle 2>&1 | grep -E "Identifier|public" | head -12 | cut -c1-160
