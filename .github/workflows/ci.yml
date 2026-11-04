@@ -27,10 +27,12 @@ jobs:
         run: gradle build --no-daemon
 
       - name: Show packaged fabric.mod.json
-        run: unzip -p build/libs/metallic-iris-metal-0.1.0.jar fabric.mod.json
+        run: |
+          ls -1 build/libs
+          unzip -p build/libs/metallic-iris-metal-0.1.0.jar fabric.mod.json
 
       - uses: actions/upload-artifact@v4
         with:
           name: metallic-iris-metal-test-jar
-          path: build/libs/*.jar
+          path: build/libs/metallic-iris-metal-0.1.0.jar
           if-no-files-found: error
