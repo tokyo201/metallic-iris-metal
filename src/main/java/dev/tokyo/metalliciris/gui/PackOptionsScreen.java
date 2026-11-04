@@ -17,8 +17,6 @@ import net.minecraft.network.chat.Component;
  * only be edited in the config file.
  */
 public final class PackOptionsScreen extends Screen {
-    private static final int ROWS_PER_PAGE = 6;
-
     private final Screen parent;
     private final String pack;
     private final int page;
@@ -37,9 +35,9 @@ public final class PackOptionsScreen extends Screen {
     @Override
     protected void init() {
         int cx = this.width / 2;
-        int y = 20;
+        int y = 10;
         addRenderableWidget(new StringWidget(cx - 150, y, 300, 12, this.title, Minecraft.getInstance().font));
-        y += 22;
+        y += 18;
 
         ShaderManager manager = MetallicIrisMetal.manager();
         List<ShaderOption> options;
@@ -59,10 +57,11 @@ public final class PackOptionsScreen extends Screen {
         }
 
         ShaderSettings settings = manager == null ? null : manager.settings();
-        int pageCount = Math.max(1, (options.size() + ROWS_PER_PAGE - 1) / ROWS_PER_PAGE);
+        int rows = Math.max(1, (this.height - y - 80) / 24);
+        int pageCount = Math.max(1, (options.size() + rows - 1) / rows);
         int current = Math.min(page, pageCount - 1);
-        int from = current * ROWS_PER_PAGE;
-        int to = Math.min(options.size(), from + ROWS_PER_PAGE);
+        int from = current * rows;
+        int to = Math.min(options.size(), from + rows);
 
         for (int i = from; i < to; i++) {
             ShaderOption option = options.get(i);

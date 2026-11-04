@@ -1,5 +1,6 @@
 package dev.tokyo.metalliciris.gui;
 
+import dev.tokyo.metalliciris.HookStats;
 import dev.tokyo.metalliciris.MetallicIrisMetal;
 import dev.tokyo.metalliciris.ShaderManager;
 import dev.tokyo.metalliciris.config.ShaderSettings;
@@ -15,8 +16,6 @@ import net.minecraft.network.chat.Component;
  * select it, enable or disable it, and open its options. Large pack lists are paged.
  */
 public final class ShaderSettingsScreen extends Screen {
-    private static final int ROWS_PER_PAGE = 5;
-
     private final Screen parent;
     private final int page;
 
@@ -34,10 +33,10 @@ public final class ShaderSettingsScreen extends Screen {
     protected void init() {
         ShaderManager manager = MetallicIrisMetal.manager();
         int cx = this.width / 2;
-        int y = 20;
+        int y = 10;
 
         addRenderableWidget(new StringWidget(cx - 150, y, 300, 12, this.title, Minecraft.getInstance().font));
-        y += 22;
+        y += 16;
 
         if (manager == null) {
             addRenderableWidget(new StringWidget(cx - 150, y, 300, 12,
@@ -53,7 +52,11 @@ public final class ShaderSettingsScreen extends Screen {
             MetallicIrisMetal.saveSettings();
             refresh();
         }).bounds(cx - 150, y, 300, 20).build());
-        y += 28;
+        y += 24;
+
+        addRenderableWidget(new StringWidget(cx - 150, y, 300, 10,
+                Component.literal(shorten(HookStats.describe(manager), 70)), Minecraft.getInstance().font));
+        y += 14;
 
         List<String> packs = manager.installedPacks();
         if (packs.isEmpty()) {
@@ -62,10 +65,11 @@ public final class ShaderSettingsScreen extends Screen {
                     Minecraft.getInstance().font));
         }
 
-        int pageCount = Math.max(1, (packs.size() + ROWS_PER_PAGE - 1) / ROWS_PER_PAGE);
+        int rows = Math.max(1, (this.height - y - 56) / 24);
+        int pageCount = Math.max(1, (packs.size() + rows - 1) / rows);
         int current = Math.min(page, pageCount - 1);
-        int from = current * ROWS_PER_PAGE;
-        int to = Math.min(packs.size(), from + ROWS_PER_PAGE);
+        int from = current * rows;
+        int to = Math.min(packs.size(), from + rows);
 
         for (int i = from; i < to; i++) {
             String pack = packs.get(i);

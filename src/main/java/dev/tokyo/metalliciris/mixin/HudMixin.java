@@ -1,5 +1,6 @@
 package dev.tokyo.metalliciris.mixin;
 
+import dev.tokyo.metalliciris.HookStats;
 import dev.tokyo.metalliciris.MetallicIrisMetal;
 import dev.tokyo.metalliciris.ShaderManager;
 import net.minecraft.client.DeltaTracker;
@@ -26,10 +27,12 @@ public abstract class HudMixin {
             at = @At("HEAD"),
             require = 0)
     private void metallicIris$tint(GuiGraphicsExtractor graphics, DeltaTracker delta, CallbackInfo ci) {
+        HookStats.frameSeen();
         ShaderManager manager = MetallicIrisMetal.manager();
         if (manager == null || !manager.isShaderActive()) {
             return;
         }
+        HookStats.frameTinted();
         var window = Minecraft.getInstance().getWindow();
         graphics.fill(0, 0, window.getGuiScaledWidth(), window.getGuiScaledHeight(), TINT_ARGB);
         if (!metallicIris$logged) {
