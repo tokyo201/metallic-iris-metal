@@ -17,15 +17,12 @@ jobs:
           gradle-version: "9.8.2"
       - name: Populate Loom cache
         run: gradle compileJava --no-daemon -q
-      - name: Dump Gui details
+      - name: Dump Fabric HUD API
         run: |
-          JAR=$(find "$HOME/.gradle" -name 'minecraft-merged.jar' | head -1)
-          echo "JAR=$JAR"
-          echo "##### Gui fields"
-          javap -p -cp "$JAR" net.minecraft.client.gui.Gui | grep -E "GuiGraphicsExtractor|Minecraft minecraft|Font font|extractRenderState|extractOverlay|extractHotbar|extractCrosshair" | cut -c1-200
-          echo "##### extractRenderState bytecode refs"
-          javap -p -c -cp "$JAR" net.minecraft.client.gui.Gui | awk '/public void extractRenderState\(net.minecraft.client.DeltaTracker/{f=1} f&&/^$/{exit} f' | grep -E "GuiGraphicsExtractor|invoke.*Gui\.|getfield" | head -30 | cut -c1-200
-          echo "##### who calls Gui.extractRenderState"
-          javap -p -c -cp "$JAR" net.minecraft.client.renderer.GameRenderer | grep -E "Gui.extractRenderState|GuiGraphicsExtractor.\"<init>|GuiRenderState" | head -8 | cut -c1-200
-          echo "##### Gui class members count"
-          javap -p -cp "$JAR" net.minecraft.client.gui.Gui | grep -c .
+          for J in $(find "$HOME/.gradle" -name 'fabric-rendering-v1*.jar' ! -name '*sources*' | head -2); do echo "JAR=$J"; done
+          J=$(find "$HOME/.gradle" -name 'fabric-rendering-v1*.jar' ! -name '*sources*' | head -1)
+          echo "##### HUD classes in jar"
+          unzip -l "$J" | awk '{print $4}' | grep -E "client/rendering/v1/hud/[A-Za-z]+\.class$" | head -20
+          for c in net.fabricmc.fabric.api.client.rendering.v1.hud.HudElementRegistry net.fabricmc.fabric.api.client.rendering.v1.hud.HudElement net.fabricmc.fabric.api.client.rendering.v1.hud.VanillaHudElements; do
+            echo "##### $c"; javap -p -cp "$J" "$c" 2>&1 | cut -c1-200 | head -30
+          done
