@@ -1,5 +1,6 @@
 package dev.tokyo.metalliciris.render;
 
+import dev.tokyo.metalliciris.HookStats;
 import dev.tokyo.metalliciris.MetallicIrisMetal;
 import dev.tokyo.metalliciris.ShaderManager;
 import java.lang.reflect.Method;
@@ -43,6 +44,7 @@ public final class PostEffectController {
         Identifier current = renderer.currentPostEffect();
 
         if (!want) {
+            HookStats.setEffectState(manager != null && manager.isShaderActive() ? "off (Test effect is OFF or not in a world)" : "off");
             attempted = false;
             gaveUp = false;
             failures = 0;
@@ -57,6 +59,7 @@ public final class PostEffectController {
         if (EFFECT.equals(current)) {
             attempted = false;
             failures = 0;
+            HookStats.setEffectState("ACTIVE - game accepted it (if the screen is not gray, the result is not being shown)");
             if (!loggedApplied) {
                 loggedApplied = true;
                 MetallicIrisMetal.say("post effect ACTIVE: " + EFFECT);
@@ -68,9 +71,11 @@ public final class PostEffectController {
         }
         if (attempted && ++failures >= MAX_FAILURES) {
             gaveUp = true;
+            HookStats.setEffectState("REJECTED - game dropped it " + MAX_FAILURES + " times (shader likely failed to compile)");
             MetallicIrisMetal.say("post effect " + EFFECT + " keeps getting dropped by the game; giving up until shaders are toggled");
             return;
         }
+        HookStats.setEffectState("applying (attempt " + (failures + 1) + ")");
         apply(renderer);
     }
 
@@ -88,6 +93,7 @@ public final class PostEffectController {
             setter.invoke(renderer, EFFECT);
         } catch (ReflectiveOperationException | RuntimeException e) {
             gaveUp = true;
+            HookStats.setEffectState("ERROR - " + e);
             MetallicIrisMetal.say("could not apply post effect: " + e);
             MetallicIrisMetal.LOG.error("post effect failed", e);
         }

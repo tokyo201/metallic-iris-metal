@@ -5,7 +5,18 @@ public final class HookStats {
     private static volatile long hudFrames;
     private static volatile long tintedFrames;
 
+    private static volatile String effectState = "not started";
+
     private HookStats() {}
+
+    /** What the post-effect controller last did, shown on the settings screen. */
+    public static void setEffectState(String state) {
+        effectState = state;
+    }
+
+    public static String effectState() {
+        return effectState;
+    }
 
     public static void frameSeen() {
         hudFrames++;

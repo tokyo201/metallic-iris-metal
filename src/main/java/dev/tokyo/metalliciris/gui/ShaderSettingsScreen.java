@@ -73,6 +73,9 @@ public final class ShaderSettingsScreen extends Screen {
 
         addRenderableWidget(new StringWidget(cx - 150, y, 300, 10,
                 Component.literal(shorten(HookStats.describe(manager), 70)), Minecraft.getInstance().font));
+        y += 11;
+        addRenderableWidget(new StringWidget(cx - 150, y, 300, 10,
+                Component.literal(shorten("Effect: " + HookStats.effectState(), 70)), Minecraft.getInstance().font));
         y += 14;
 
         List<String> packs = manager.installedPacks();
