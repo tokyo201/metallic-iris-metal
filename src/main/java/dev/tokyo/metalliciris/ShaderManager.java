@@ -57,6 +57,15 @@ public final class ShaderManager {
         return names;
     }
 
+    /**
+     * Cheap per-frame check: shaders are switched on and a pack is selected and not disabled.
+     * Looks only at the settings (no disk access), so it is safe to call every frame.
+     */
+    public boolean isShaderActive() {
+        String pack = settings.getActivePack();
+        return settings.isEnabled() && pack != null && settings.isPackEnabled(pack);
+    }
+
     /** Installed packs that have not been disabled. */
     public List<String> enabledPacks() {
         return installedPacks().stream().filter(settings::isPackEnabled).toList();

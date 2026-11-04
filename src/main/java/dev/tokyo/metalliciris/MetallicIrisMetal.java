@@ -9,7 +9,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public final class MetallicIrisMetal implements ClientModInitializer {
-    private static final Logger LOG = LoggerFactory.getLogger("Metallic Iris Metal");
+    public static final Logger LOG = LoggerFactory.getLogger("Metallic Iris Metal");
 
     private static Path settingsFile;
     private static ShaderManager manager;

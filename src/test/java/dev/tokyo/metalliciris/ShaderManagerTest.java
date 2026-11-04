@@ -102,6 +102,17 @@ class ShaderManagerTest {
     }
 
     @Test
+    void shaderActiveNeedsSwitchAndEnabledSelectedPack() {
+        assertFalse(manager.isShaderActive());
+        manager.activate("Cool");
+        assertFalse(manager.isShaderActive(), "master switch still off");
+        settings.setEnabled(true);
+        assertTrue(manager.isShaderActive());
+        settings.setPackEnabled("Cool", false);
+        assertFalse(manager.isShaderActive(), "disabled pack is deselected");
+    }
+
+    @Test
     void listsDeclaredOptions() {
         assertEquals(List.of("SHADOWS", "BLOOM", "QUALITY"),
                 manager.options("Cool").stream().map(o -> o.name()).toList());
