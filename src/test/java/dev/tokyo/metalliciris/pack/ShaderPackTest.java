@@ -106,4 +106,23 @@ class ShaderPackTest {
             Files.writeString(p, e.getValue());
         }
     }
+
+    @Test
+    void acceptsPacksWrappedInOneFolder(@TempDir Path dir) throws IOException {
+        Path wrapped = dir.resolve("Outer/Inner/shaders");
+        Files.createDirectories(wrapped);
+        Files.writeString(wrapped.resolve("final.fsh"), "void main() {}");
+        assertTrue(PackFiles.looksLikePack(dir.resolve("Outer")));
+        assertEquals(1, ShaderPack.loadDirectory(dir.resolve("Outer")).programs().size());
+
+        Path zip = dir.resolve("wrapped.zip");
+        try (OutputStream os = Files.newOutputStream(zip); ZipOutputStream z = new ZipOutputStream(os)) {
+            z.putNextEntry(new ZipEntry("MyPack/shaders/final.fsh"));
+            z.write("void main() {}".getBytes(StandardCharsets.UTF_8));
+            z.closeEntry();
+        }
+        assertTrue(PackFiles.looksLikePack(zip));
+        assertEquals(1, ShaderPack.loadZip(zip).programs().size());
+        assertFalse(PackFiles.looksLikePack(dir.resolve("missing.zip")));
+    }
 }

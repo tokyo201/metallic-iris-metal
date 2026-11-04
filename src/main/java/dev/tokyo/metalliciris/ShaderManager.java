@@ -49,9 +49,8 @@ public final class ShaderManager {
         try (Stream<Path> children = Files.list(packsDir)) {
             for (Path p : (Iterable<Path>) children::iterator) {
                 String name = p.getFileName().toString();
-                boolean dirPack = Files.isDirectory(p) && Files.isDirectory(p.resolve("shaders"));
-                boolean zipPack = Files.isRegularFile(p) && name.toLowerCase(Locale.ROOT).endsWith(".zip");
-                if (dirPack || zipPack) {
+                boolean zipName = Files.isRegularFile(p) && name.toLowerCase(Locale.ROOT).endsWith(".zip");
+                if ((Files.isDirectory(p) || zipName) && PackFiles.looksLikePack(p)) {
                     names.add(name);
                 }
             }
@@ -69,6 +68,27 @@ public final class ShaderManager {
     public boolean isShaderActive() {
         String pack = settings.getActivePack();
         return settings.isEnabled() && pack != null && settings.isPackEnabled(pack);
+    }
+
+    /** One line describing what is in the packs folder, for diagnosing "no packs found". */
+    public String describeFolder() {
+        if (!Files.isDirectory(packsDir)) {
+            return "packs folder " + packsDir + " does not exist";
+        }
+        try (Stream<Path> kids = Files.list(packsDir)) {
+            List<String> parts = new ArrayList<>();
+            for (Path k : (Iterable<Path>) kids.sorted()::iterator) {
+                parts.add(k.getFileName() + (Files.isDirectory(k) ? "/" : "")
+                        + (PackFiles.looksLikePack(k) ? "[pack]" : "[not a pack]"));
+                if (parts.size() >= 15) {
+                    parts.add("...");
+                    break;
+                }
+            }
+            return "packs folder " + packsDir + " contains " + (parts.isEmpty() ? "nothing" : parts);
+        } catch (IOException e) {
+            return "packs folder " + packsDir + " unreadable: " + e;
+        }
     }
 
     /** Installed packs that have not been disabled. */

@@ -36,12 +36,48 @@ public final class PackFiles {
         return new PackFiles(files);
     }
 
+    /**
+     * Finds the folder that holds {@code shaders/}: the pack root itself, or a single level below
+     * it (packs are often unzipped into a folder that contains another folder).
+     */
+    static Path findPackRoot(Path dir) {
+        if (Files.isDirectory(dir.resolve("shaders"))) {
+            return dir;
+        }
+        try (Stream<Path> kids = Files.list(dir)) {
+            for (Path k : (Iterable<Path>) kids.sorted()::iterator) {
+                if (Files.isDirectory(k) && Files.isDirectory(k.resolve("shaders"))) {
+                    return k;
+                }
+            }
+        } catch (IOException e) {
+            return null;
+        }
+        return null;
+    }
+
+    /** Whether a folder or {@code .zip} looks like a shaderpack (a shaders/ folder at most one level down). */
+    public static boolean looksLikePack(Path path) {
+        if (Files.isDirectory(path)) {
+            return findPackRoot(path) != null;
+        }
+        if (!Files.isRegularFile(path)) {
+            return false;
+        }
+        try (ZipFile zf = new ZipFile(path.toFile())) {
+            return zipPrefix(zf) != null;
+        } catch (IOException e) {
+            return false;
+        }
+    }
+
     /** Loads a pack from an unzipped directory that contains a {@code shaders/} folder. */
     public static PackFiles fromDirectory(Path packRoot) {
-        Path shaders = packRoot.resolve("shaders");
-        if (!Files.isDirectory(shaders)) {
+        Path root = findPackRoot(packRoot);
+        if (root == null) {
             throw new ShaderPackException("No shaders/ folder in " + packRoot);
         }
+        Path shaders = root.resolve("shaders");
         Map<String, String> out = new TreeMap<>();
         try (Stream<Path> walk = Files.walk(shaders)) {
             for (Path p : (Iterable<Path>) walk.filter(Files::isRegularFile)::iterator) {
@@ -56,29 +92,50 @@ public final class PackFiles {
         return new PackFiles(out);
     }
 
-    /** Loads a pack from a {@code .zip} file that has a {@code shaders/} folder at its root. */
+    /**
+     * The path inside the zip that precedes {@code shaders/}: empty for a root-level folder, or
+     * e.g. {@code MyPack/} when the pack is wrapped in one folder. Null if there is none.
+     */
+    private static String zipPrefix(ZipFile zf) {
+        String best = null;
+        Enumeration<? extends ZipEntry> entries = zf.entries();
+        while (entries.hasMoreElements()) {
+            String name = entries.nextElement().getName().replace('\\', '/');
+            int i = name.indexOf("shaders/");
+            if (i == 0 || (i > 0 && name.charAt(i - 1) == '/')) {
+                String prefix = name.substring(0, i);
+                if (prefix.chars().filter(c -> c == '/').count() <= 1
+                        && (best == null || prefix.length() < best.length())) {
+                    best = prefix;
+                }
+            }
+        }
+        return best;
+    }
+
+    /** Loads a pack from a {@code .zip}; {@code shaders/} may be at the root or inside one wrapper folder. */
     public static PackFiles fromZip(Path zip) {
         Map<String, String> out = new TreeMap<>();
         try (ZipFile zf = new ZipFile(zip.toFile())) {
+            String prefix = zipPrefix(zf);
+            if (prefix == null) {
+                throw new ShaderPackException("No shaders/ folder in " + zip);
+            }
+            String base = prefix + "shaders/";
             Enumeration<? extends ZipEntry> entries = zf.entries();
-            boolean sawShadersFolder = false;
             while (entries.hasMoreElements()) {
                 ZipEntry e = entries.nextElement();
                 String name = e.getName().replace('\\', '/');
-                if (!name.startsWith("shaders/")) {
+                if (!name.startsWith(base)) {
                     continue;
                 }
-                sawShadersFolder = true;
-                String rel = name.substring("shaders/".length());
+                String rel = name.substring(base.length());
                 if (e.isDirectory() || rel.isEmpty() || !isText(rel)) {
                     continue;
                 }
                 try (InputStream in = zf.getInputStream(e)) {
                     out.put(rel, new String(in.readAllBytes(), StandardCharsets.UTF_8));
                 }
-            }
-            if (!sawShadersFolder) {
-                throw new ShaderPackException("No shaders/ folder at the root of " + zip);
             }
         } catch (IOException e) {
             throw new ShaderPackException("Failed to read shaderpack " + zip, e);
