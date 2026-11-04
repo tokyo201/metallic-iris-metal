@@ -17,18 +17,15 @@ jobs:
           gradle-version: "9.8.2"
       - name: Populate Loom cache
         run: gradle compileJava --no-daemon -q
-      - name: Dump renderer API
+      - name: Dump Gui details
         run: |
-          JAR=""
-          for j in $(find "$HOME/.gradle" "$PWD/.gradle" -name '*.jar' -size +5M 2>/dev/null); do
-            if unzip -l "$j" 2>/dev/null | grep -q 'net/minecraft/client/renderer/GameRenderer.class'; then JAR="$j"; break; fi
-          done
+          JAR=$(find "$HOME/.gradle" -name 'minecraft-merged.jar' | head -1)
           echo "JAR=$JAR"
-          for c in net.minecraft.client.renderer.GameRenderer net.minecraft.client.renderer.LevelRenderer net.minecraft.client.gui.Gui net.minecraft.client.gui.GuiGraphicsExtractor; do
-            echo "##### $c"
-            javap -p -cp "$JAR" "$c" 2>&1 | grep -E "^(public |final |abstract )?(class|interface)|void (render|extract|fill|draw)[A-Za-z]*\(|(render|extract|fill|draw|blit)[A-Za-z]*\(.*\)" | cut -c1-210 | head -45
-          done
-          echo "##### Minecraft.renderFrame/runTick"
-          javap -p -cp "$JAR" net.minecraft.client.Minecraft | grep -E "renderFrame|runTick|gameRenderer|getMainRenderTarget" | cut -c1-200
-          echo "##### mixin on classpath?"
-          find "$HOME/.gradle" -name 'sponge-mixin*.jar' | head -2
+          echo "##### Gui fields"
+          javap -p -cp "$JAR" net.minecraft.client.gui.Gui | grep -E "GuiGraphicsExtractor|Minecraft minecraft|Font font|extractRenderState|extractOverlay|extractHotbar|extractCrosshair" | cut -c1-200
+          echo "##### extractRenderState bytecode refs"
+          javap -p -c -cp "$JAR" net.minecraft.client.gui.Gui | awk '/public void extractRenderState\(net.minecraft.client.DeltaTracker/{f=1} f&&/^$/{exit} f' | grep -E "GuiGraphicsExtractor|invoke.*Gui\.|getfield" | head -30 | cut -c1-200
+          echo "##### who calls Gui.extractRenderState"
+          javap -p -c -cp "$JAR" net.minecraft.client.renderer.GameRenderer | grep -E "Gui.extractRenderState|GuiGraphicsExtractor.\"<init>|GuiRenderState" | head -8 | cut -c1-200
+          echo "##### Gui class members count"
+          javap -p -cp "$JAR" net.minecraft.client.gui.Gui | grep -c .
