@@ -32,6 +32,7 @@ public final class ShaderSettingsScreen extends Screen {
     @Override
     protected void init() {
         ShaderManager manager = MetallicIrisMetal.manager();
+        MetallicIrisMetal.say("settings screen opened: " + HookStats.describe(manager));
         int cx = this.width / 2;
         int y = 10;
 

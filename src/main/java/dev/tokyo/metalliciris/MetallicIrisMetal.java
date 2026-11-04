@@ -14,6 +14,15 @@ public final class MetallicIrisMetal implements ClientModInitializer {
     private static Path settingsFile;
     private static ShaderManager manager;
 
+    /**
+     * Logs through the normal logger and also prints to stdout with a [MIM] prefix, because some
+     * launchers drop log4j output but still capture stdout.
+     */
+    public static void say(String message) {
+        LOG.info(message);
+        System.out.println("[MIM] " + message);
+    }
+
     /** The shader manager, available once the client has initialised. */
     public static ShaderManager manager() {
         return manager;
@@ -31,10 +40,20 @@ public final class MetallicIrisMetal implements ClientModInitializer {
         ShaderSettings settings = ShaderSettingsStore.load(settingsFile);
         manager = new ShaderManager(loader.getGameDir().resolve("shaderpacks"), settings);
 
+        say("init: build=hud-fabricapi-v3, mod version "
+                + loader.getModContainer("metallic_iris_metal").map(c -> c.getMetadata().getVersion().getFriendlyString()).orElse("?")
+                + ", fabric-rendering-v1 loaded=" + loader.isModLoaded("fabric-rendering-v1")
+                + ", modmenu loaded=" + loader.isModLoaded("modmenu"));
         if (loader.isModLoaded("fabric-rendering-v1")) {
-            dev.tokyo.metalliciris.hud.HudTint.register();
+            try {
+                dev.tokyo.metalliciris.hud.HudTint.register();
+                say("HUD hook registered");
+            } catch (Throwable t) {
+                say("HUD hook FAILED to register: " + t);
+                LOG.error("HUD hook registration failed", t);
+            }
         } else {
-            LOG.warn("Fabric API (fabric-rendering-v1) not found: the render hook is disabled.");
+            say("Fabric API (fabric-rendering-v1) not found: the render hook is disabled.");
         }
 
         boolean irisPresent = loader.isModLoaded("iris");

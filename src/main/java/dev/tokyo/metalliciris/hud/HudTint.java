@@ -16,6 +16,7 @@ import net.minecraft.resources.Identifier;
 public final class HudTint {
     private static final int TINT_ARGB = 0x70FF8800;
     private static boolean logged;
+    private static int lastState = -1;
 
     private HudTint() {}
 
@@ -23,9 +24,18 @@ public final class HudTint {
         HudElementRegistry.addFirst(
                 Identifier.fromNamespaceAndPath("metallic_iris_metal", "shader_tint"),
                 (graphics, delta) -> {
+                    if (HookStats.hudFrames() == 0) {
+                        MetallicIrisMetal.say("HUD hook: first frame drawn");
+                    }
                     HookStats.frameSeen();
                     ShaderManager manager = MetallicIrisMetal.manager();
                     boolean active = manager != null && manager.isShaderActive();
+                    int state = active ? 1 : 0;
+                    if (state != lastState) {
+                        lastState = state;
+                        MetallicIrisMetal.say("HUD hook: shaders " + (active ? "ACTIVE" : "inactive")
+                                + (manager == null ? " (manager null)" : ", " + HookStats.describe(manager)));
+                    }
                     // Status square, top-left: green = shaders active, red = hook runs but shaders inactive.
                     graphics.fill(2, 2, 10, 10, active ? 0xFF00FF00 : 0xFFFF0000);
                     if (!active) {
