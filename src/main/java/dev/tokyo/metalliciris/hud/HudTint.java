@@ -9,11 +9,12 @@ import net.minecraft.resources.Identifier;
 
 /**
  * Proof-of-hook, registered through Fabric API's HUD registry (no mixin). While shaders are on
- * with an active pack it draws a translucent orange tint behind the HUD every frame.
+ * with an active pack it draws a translucent orange tint behind the HUD every frame, plus a small
+ * status square in the top-left corner (green when active, red when not) whenever the hook runs.
  * This is not shading yet.
  */
 public final class HudTint {
-    private static final int TINT_ARGB = 0x40FF8800;
+    private static final int TINT_ARGB = 0x70FF8800;
     private static boolean logged;
 
     private HudTint() {}
@@ -24,7 +25,10 @@ public final class HudTint {
                 (graphics, delta) -> {
                     HookStats.frameSeen();
                     ShaderManager manager = MetallicIrisMetal.manager();
-                    if (manager == null || !manager.isShaderActive()) {
+                    boolean active = manager != null && manager.isShaderActive();
+                    // Status square, top-left: green = shaders active, red = hook runs but shaders inactive.
+                    graphics.fill(2, 2, 10, 10, active ? 0xFF00FF00 : 0xFFFF0000);
+                    if (!active) {
                         return;
                     }
                     HookStats.frameTinted();
