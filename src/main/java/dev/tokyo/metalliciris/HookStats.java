@@ -26,7 +26,7 @@ public final class HookStats {
     /** One line saying what the hook has done and, if it is not tinting, why not. */
     public static String describe(ShaderManager manager) {
         if (hudFrames == 0) {
-            return "Hook: NOT RUNNING yet (open this from inside a world, or the mixin did not attach)";
+            return "Hook: NOT RUNNING yet (open this from inside a world, or Fabric API is missing)";
         }
         String why;
         if (manager == null) {

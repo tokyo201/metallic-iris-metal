@@ -31,6 +31,12 @@ public final class MetallicIrisMetal implements ClientModInitializer {
         ShaderSettings settings = ShaderSettingsStore.load(settingsFile);
         manager = new ShaderManager(loader.getGameDir().resolve("shaderpacks"), settings);
 
+        if (loader.isModLoaded("fabric-rendering-v1")) {
+            dev.tokyo.metalliciris.hud.HudTint.register();
+        } else {
+            LOG.warn("Fabric API (fabric-rendering-v1) not found: the render hook is disabled.");
+        }
+
         boolean irisPresent = loader.isModLoaded("iris");
         LOG.info("Clean-room Metal shader compatibility prototype loaded. Iris present: {}. "
                         + "Shaders {}, active pack: {}. Renderer pipeline integration is not implemented yet.",
