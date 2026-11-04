@@ -56,6 +56,17 @@ public final class MetallicIrisMetal implements ClientModInitializer {
             say("Fabric API (fabric-rendering-v1) not found: the render hook is disabled.");
         }
 
+        if (loader.isModLoaded("fabric-lifecycle-events-v1")) {
+            try {
+                dev.tokyo.metalliciris.render.PostEffectController.register();
+                say("post effect controller registered");
+            } catch (Throwable t) {
+                say("post effect controller FAILED to register: " + t);
+            }
+        } else {
+            say("fabric-lifecycle-events-v1 not found: post effects disabled");
+        }
+
         boolean irisPresent = loader.isModLoaded("iris");
         LOG.info("Clean-room Metal shader compatibility prototype loaded. Iris present: {}. "
                         + "Shaders {}, active pack: {}. Renderer pipeline integration is not implemented yet.",
