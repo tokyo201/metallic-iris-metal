@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   build:
@@ -31,7 +31,22 @@ jobs:
           ls -1 build/libs
           unzip -p build/libs/metallic-iris-metal-0.1.0.jar fabric.mod.json
 
+      - name: Publish jar to the rolling latest-build release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          JAR=build/libs/metallic-iris-metal-0.1.0.jar
+          NOTES="Rolling build of main at ${GITHUB_SHA::7}. Replaced on every push."
+          if gh release view latest-build >/dev/null 2>&1; then
+            gh release edit latest-build --notes "$NOTES"
+          else
+            gh release create latest-build --prerelease --target "$GITHUB_SHA" \
+              --title "Latest build" --notes "$NOTES"
+          fi
+          gh release upload latest-build "$JAR" --clobber
+
       - uses: actions/upload-artifact@v4
+        continue-on-error: true
         with:
           name: metallic-iris-metal-test-jar
           path: build/libs/metallic-iris-metal-0.1.0.jar
