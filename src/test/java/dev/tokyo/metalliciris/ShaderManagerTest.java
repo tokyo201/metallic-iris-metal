@@ -113,6 +113,17 @@ class ShaderManagerTest {
     }
 
     @Test
+    void autoSelectsFirstEnabledPackOnlyWhenShadersAreOnWithNoneSelected() {
+        assertFalse(manager.autoSelectIfNeeded(), "shaders off");
+        settings.setEnabled(true);
+        settings.setPackEnabled("Cool", false);
+        assertTrue(manager.autoSelectIfNeeded());
+        assertEquals("Zipped.zip", settings.getActivePack(), "skips the disabled pack");
+        assertFalse(manager.autoSelectIfNeeded(), "already selected");
+        assertTrue(manager.isShaderActive());
+    }
+
+    @Test
     void listsDeclaredOptions() {
         assertEquals(List.of("SHADOWS", "BLOOM", "QUALITY"),
                 manager.options("Cool").stream().map(o -> o.name()).toList());

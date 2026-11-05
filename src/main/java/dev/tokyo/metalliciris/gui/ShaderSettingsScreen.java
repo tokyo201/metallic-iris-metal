@@ -32,6 +32,10 @@ public final class ShaderSettingsScreen extends Screen {
     @Override
     protected void init() {
         ShaderManager manager = MetallicIrisMetal.manager();
+        if (manager != null && manager.autoSelectIfNeeded()) {
+            MetallicIrisMetal.saveSettings();
+            MetallicIrisMetal.say("auto-selected pack " + manager.settings().getActivePack());
+        }
         MetallicIrisMetal.say("settings screen opened: " + HookStats.describe(manager));
         if (manager != null) {
             MetallicIrisMetal.say(manager.describeFolder());

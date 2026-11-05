@@ -96,6 +96,19 @@ public final class ShaderManager {
         return installedPacks().stream().filter(settings::isPackEnabled).toList();
     }
 
+    /**
+     * When shaders are on but no pack is selected, selects the first enabled installed pack.
+     *
+     * @return true if a pack was selected
+     */
+    public boolean autoSelectIfNeeded() {
+        if (!settings.isEnabled() || settings.getActivePack() != null) {
+            return false;
+        }
+        List<String> usable = enabledPacks();
+        return !usable.isEmpty() && activate(usable.get(0));
+    }
+
     /** Makes {@code pack} the active pack. Returns false if it is not installed or is disabled. */
     public boolean activate(String pack) {
         if (!installedPacks().contains(pack) || !settings.isPackEnabled(pack)) {

@@ -67,6 +67,11 @@ public final class MetallicIrisMetal implements ClientModInitializer {
             say("fabric-lifecycle-events-v1 not found: post effects disabled");
         }
 
+        if (manager.autoSelectIfNeeded()) {
+            saveSettings();
+            say("auto-selected pack " + settings.getActivePack());
+        }
+
         boolean irisPresent = loader.isModLoaded("iris");
         LOG.info("Clean-room Metal shader compatibility prototype loaded. Iris present: {}. "
                         + "Shaders {}, active pack: {}. Renderer pipeline integration is not implemented yet.",
