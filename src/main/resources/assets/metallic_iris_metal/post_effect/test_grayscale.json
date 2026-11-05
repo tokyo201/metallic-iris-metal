@@ -32,6 +32,7 @@
                     "target": "swap"
                 }
             ],
+            "output": "minecraft:main",
             "uniforms": {
                 "BlitConfig": [
                     {
