@@ -45,9 +45,10 @@ public final class HookStats {
         } else if (!manager.settings().isEnabled()) {
             why = "Shaders is OFF";
         } else if (manager.settings().getActivePack() == null) {
-            why = "no pack selected (press a pack name)";
+            why = "no pack selected - tap a pack name (" + manager.installedPacks().size()
+                    + " found, " + manager.settings().disabledPacks().size() + " disabled)";
         } else if (!manager.settings().isPackEnabled(manager.settings().getActivePack())) {
-            why = "selected pack is Off";
+            why = "selected pack is disabled - press Enable";
         } else {
             why = "pack selected";
         }

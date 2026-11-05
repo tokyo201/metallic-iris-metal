@@ -97,24 +97,27 @@ public final class ShaderSettingsScreen extends Screen {
             boolean active = pack.equals(settings.getActivePack());
 
             Button select = Button.builder(
-                    Component.literal((active ? "> " : "") + shorten(pack, 22)),
+                    Component.literal((active ? "> " : packEnabled ? "" : "(off) ") + shorten(pack, 20)),
                     b -> {
+                        // Tapping the name always selects the pack, re-enabling it first if needed.
+                        if (!settings.isPackEnabled(pack)) {
+                            settings.setPackEnabled(pack, true);
+                        }
                         manager.activate(pack);
                         MetallicIrisMetal.saveSettings();
                         refresh();
                     }).bounds(cx - 150, y, 150, 20).build();
-            select.active = packEnabled;
             addRenderableWidget(select);
 
-            addRenderableWidget(Button.builder(Component.literal(packEnabled ? "On" : "Off"), b -> {
+            addRenderableWidget(Button.builder(Component.literal(packEnabled ? "Disable" : "Enable"), b -> {
                 settings.setPackEnabled(pack, !packEnabled);
                 MetallicIrisMetal.saveSettings();
                 refresh();
-            }).bounds(cx + 4, y, 50, 20).build());
+            }).bounds(cx + 4, y, 60, 20).build());
 
             Button options = Button.builder(Component.literal("Options"),
                     b -> Minecraft.getInstance().setScreenAndShow(new PackOptionsScreen(this, pack)))
-                    .bounds(cx + 58, y, 92, 20).build();
+                    .bounds(cx + 68, y, 82, 20).build();
             options.active = packEnabled;
             addRenderableWidget(options);
             y += 24;

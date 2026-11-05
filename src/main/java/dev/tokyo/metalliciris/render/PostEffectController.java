@@ -44,7 +44,7 @@ public final class PostEffectController {
         Identifier current = renderer.currentPostEffect();
 
         if (!want) {
-            HookStats.setEffectState(manager != null && manager.isShaderActive() ? "off (Test effect is OFF or not in a world)" : "off");
+            HookStats.setEffectState("off - " + whyOff(manager, mc));
             attempted = false;
             gaveUp = false;
             failures = 0;
@@ -77,6 +77,25 @@ public final class PostEffectController {
         }
         HookStats.setEffectState("applying (attempt " + (failures + 1) + ")");
         apply(renderer);
+    }
+
+    private static String whyOff(ShaderManager manager, Minecraft mc) {
+        if (manager == null) {
+            return "mod not ready";
+        }
+        if (!manager.settings().isEnabled()) {
+            return "Shaders is OFF";
+        }
+        if (manager.settings().getActivePack() == null) {
+            return "no pack selected";
+        }
+        if (!manager.isShaderActive()) {
+            return "selected pack is disabled";
+        }
+        if (!manager.settings().isTestEffect()) {
+            return "Test effect is OFF";
+        }
+        return mc.level == null ? "not in a world" : "waiting";
     }
 
     private static void apply(GameRenderer renderer) {
