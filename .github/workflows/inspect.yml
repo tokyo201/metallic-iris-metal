@@ -17,12 +17,12 @@ jobs:
           gradle-version: "9.8.2"
       - name: Populate Loom cache
         run: gradle compileJava --no-daemon -q
-      - name: Dump injection APIs v2
+      - name: Dump injection APIs v3
         run: |
           MC=$(find "$HOME/.gradle" -name 'minecraft-merged.jar' | head -1)
-          RL=$(find "$HOME/.gradle" -path '*fabric-resource-loader-v1*' -name '*.jar' ! -name '*sources*' | head -1)
-          for c in net.fabricmc.fabric.api.resource.v1.ResourceLoader net.fabricmc.fabric.api.resource.v1.pack.ModPackResources net.fabricmc.fabric.api.resource.v1.pack.PackActivationType net.fabricmc.fabric.api.resource.v1.DataResourceLoader; do echo "--- $c"; javap -p -cp "$RL:$MC" "$c" | cut -c1-260; done
-          for c in 'net.minecraft.client.renderer.PostPass$Input' net.minecraft.client.renderer.UniformValue 'net.minecraft.client.renderer.ShaderManager$Configs' net.minecraft.client.renderer.MappableRingBuffer net.minecraft.server.packs.resources.ResourceManager net.minecraft.server.packs.PackResources net.minecraft.server.packs.resources.IoSupplier; do echo "--- $c"; javap -p -cp "$MC" "$c" | cut -c1-260; done
-          echo "--- GameRenderer"; javap -p -cp "$MC" net.minecraft.client.renderer.GameRenderer | grep -iE "postEffect|processPost|PostChain" | cut -c1-260
-          echo "--- Identifier"; javap -p -cp "$MC" net.minecraft.resources.Identifier | grep -E "public" | cut -c1-200 | head -20
-          echo "--- ClientPackSource/Pack"; unzip -l "$RL" | awk '{print $4}' | grep -E "\\.class" | grep -vE "mixin|impl" | head -40
+          for c in 'net.minecraft.client.renderer.ShaderManager$ShaderSourceKey' com.mojang.blaze3d.shaders.ShaderType net.minecraft.client.renderer.PostChainConfig 'net.minecraft.client.renderer.PostChainConfig$InternalTarget' 'net.minecraft.client.renderer.PostChainConfig$TargetInput' 'net.minecraft.client.renderer.PostChainConfig$TextureInput' 'net.minecraft.client.renderer.UniformValue$Type' 'net.minecraft.client.renderer.ShaderManager$CompilationCache' com.mojang.blaze3d.buffers.GpuBufferSlice; do echo "--- $c"; javap -p -cp "$MC" "$c" | cut -c1-260; done
+          echo "--- loadShader bytecode"; javap -p -c -cp "$MC" net.minecraft.client.renderer.ShaderManager | sed -n '/private static void loadShader/,/private static com.mojang.blaze3d.preprocessor/p' | grep -E "invoke|new |ldc" | cut -c1-200 | head -40
+          echo "--- loadPostChain bytecode"; javap -p -c -cp "$MC" net.minecraft.client.renderer.ShaderManager | sed -n '/private static void loadPostChain/,/private static boolean isShader/p' | grep -E "invoke|new |ldc" | cut -c1-200 | head -30
+          echo "--- prepare bytecode"; javap -p -c -cp "$MC" net.minecraft.client.renderer.ShaderManager | sed -n '/protected net.minecraft.client.renderer.ShaderManager\$Configs prepare/,/private static void loadShader/p' | grep -E "invoke|ldc" | cut -c1-200 | head -30
+          echo "--- setPostEffect bytecode"; javap -p -c -cp "$MC" net.minecraft.client.renderer.GameRenderer | sed -n '/private void setPostEffect/,/^$/p' | grep -E "invoke|ldc|getfield" | cut -c1-220
+          echo "--- PostPass ctor"; javap -p -c -cp "$MC" net.minecraft.client.renderer.PostPass | sed -n '/public net.minecraft.client.renderer.PostPass(/,/public void addToFrame/p' | grep -E "invoke|ldc" | cut -c1-200 | head -30
