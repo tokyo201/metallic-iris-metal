@@ -17,18 +17,12 @@ jobs:
           gradle-version: "9.8.2"
       - name: Populate Loom cache
         run: gradle compileJava --no-daemon -q
-      - name: Dump resource injection and uniform APIs
+      - name: Dump injection APIs v2
         run: |
           MC=$(find "$HOME/.gradle" -name 'minecraft-merged.jar' | head -1)
-          echo "##### fabric resource loader jars"
-          find "$HOME/.gradle" -name 'fabric-resource-loader*.jar' ! -name '*sources*' | head -3
-          RL=$(find "$HOME/.gradle" -name 'fabric-resource-loader*.jar' ! -name '*sources*' | head -1)
-          unzip -l "$RL" | awk '{print $4}' | grep -E "api/.*\\.class" | head -30
-          for c in $(unzip -l "$RL" | awk '{print $4}' | grep -E "api/resource/v1/(ResourceLoader|pack/PackActivationType|ResourcePackBuilder)\\.class" | sed 's/\\.class//;s#/#.#g'); do echo "--- $c"; javap -p -cp "$RL" "$c" | cut -c1-220; done
-          echo "##### PostChain / PostPass / ShaderManager"
-          for c in PostChain PostPass ShaderManager; do javap -p -cp "$MC" net.minecraft.client.renderer.$c | cut -c1-220; done
-          echo "##### post effect JSON codec classes"
-          unzip -l "$MC" | awk '{print $4}' | grep -iE "PostChainConfig" | head
-          javap -p -cp "$MC" 'net.minecraft.client.renderer.PostChainConfig$Pass' 2>&1 | head -20 | cut -c1-200
-          echo "##### CommandEncoder / PostPass uniform write"
-          javap -p -cp "$MC" com.mojang.blaze3d.systems.CommandEncoder | grep -E "writeToBuffer|mapBuffer" | cut -c1-220
+          RL=$(find "$HOME/.gradle" -path '*fabric-resource-loader-v1*' -name '*.jar' ! -name '*sources*' | head -1)
+          for c in net.fabricmc.fabric.api.resource.v1.ResourceLoader net.fabricmc.fabric.api.resource.v1.pack.ModPackResources net.fabricmc.fabric.api.resource.v1.pack.PackActivationType net.fabricmc.fabric.api.resource.v1.DataResourceLoader; do echo "--- $c"; javap -p -cp "$RL:$MC" "$c" | cut -c1-260; done
+          for c in 'net.minecraft.client.renderer.PostPass$Input' net.minecraft.client.renderer.UniformValue 'net.minecraft.client.renderer.ShaderManager$Configs' net.minecraft.client.renderer.MappableRingBuffer net.minecraft.server.packs.resources.ResourceManager net.minecraft.server.packs.PackResources net.minecraft.server.packs.resources.IoSupplier; do echo "--- $c"; javap -p -cp "$MC" "$c" | cut -c1-260; done
+          echo "--- GameRenderer"; javap -p -cp "$MC" net.minecraft.client.renderer.GameRenderer | grep -iE "postEffect|processPost|PostChain" | cut -c1-260
+          echo "--- Identifier"; javap -p -cp "$MC" net.minecraft.resources.Identifier | grep -E "public" | cut -c1-200 | head -20
+          echo "--- ClientPackSource/Pack"; unzip -l "$RL" | awk '{print $4}' | grep -E "\\.class" | grep -vE "mixin|impl" | head -40
