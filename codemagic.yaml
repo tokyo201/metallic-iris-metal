@@ -1,0 +1,51 @@
+definitions:
+  setup: &setup |
+    set -e
+    mkdir -p "$HOME/tools" && cd "$HOME/tools"
+    curl -fsSL -o jdk.tgz "https://api.adoptium.net/v3/binary/latest/25/ga/linux/x64/jdk/hotspot/normal/eclipse"
+    mkdir -p jdk && tar -xzf jdk.tgz -C jdk --strip-components=1
+    curl -fsSL -o gradle.zip "https://services.gradle.org/distributions/gradle-9.8.2-bin.zip"
+    unzip -q gradle.zip
+    echo "JAVA_HOME=$HOME/tools/jdk" >> "$CM_ENV"
+    echo "PATH=$HOME/tools/jdk/bin:$HOME/tools/gradle-9.8.2/bin:$PATH" >> "$CM_ENV"
+
+workflows:
+  build:
+    name: Build mod jar
+    instance_type: linux_x2
+    max_build_duration: 30
+    triggering:
+      events: [push]
+      branch_patterns:
+        - pattern: main
+    scripts:
+      - name: Install JDK 25 and Gradle 9.8.2
+        script: *setup
+      - name: Build and test
+        script: gradle build --no-daemon
+    artifacts:
+      - build/libs/metallic-iris-metal-0.1.0.jar
+      - build/reports/tests/**/*
+
+  inspect:
+    name: Dump Minecraft and Fabric APIs
+    instance_type: linux_x2
+    max_build_duration: 30
+    scripts:
+      - name: Install JDK 25 and Gradle 9.8.2
+        script: *setup
+      - name: Populate Loom cache
+        script: gradle compileJava --no-daemon -q
+      - name: Dump APIs to a text artifact
+        script: |
+          python3 - <<'PY'
+          import re
+          s = open('.github/workflows/inspect.yml').read()
+          i = s.index('run: |\n', s.index('Dump resource injection')) + len('run: |\n')
+          body = '\n'.join(l[10:] for l in s[i:].splitlines())
+          open('dump.sh', 'w').write(body)
+          PY
+          bash dump.sh > api-dump.txt 2>&1 || true
+          cat api-dump.txt
+    artifacts:
+      - api-dump.txt
